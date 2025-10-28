@@ -27,7 +27,7 @@ class DotsOCRParser:
             temperature=0.1,
             top_p=1.0,
             max_completion_tokens=16384,
-            num_thread=64,
+            num_thread=8,
             dpi = 200, 
             output_dir="./output", 
             min_pixels=None,
