@@ -22,7 +22,40 @@ dict_promptmode_to_prompt = {
     # prompt_layout_only_en: layout detection
     "prompt_layout_only_en": """Please output the layout information from this PDF image, including each layout's bbox and its category. The bbox should be in the format [x1, y1, x2, y2]. The layout categories for the PDF document include ['Caption', 'Footnote', 'Formula', 'List-item', 'Page-footer', 'Page-header', 'Picture', 'Section-header', 'Table', 'Text', 'Title']. Do not output the corresponding text. The layout result should be in JSON format.""",
 
-    # prompt_layout_only_en: parse ocr text except the Page-header and Page-footer
+    # prompt_layout_with_orientation_en: layout detection with orientation
+    "prompt_layout_with_orientation_en": """Output ONLY a JSON array with layout detection results. Each element must have exactly 3 fields: bbox, category, and orientation.
+
+**Required Output Format:**
+```json
+[
+    {
+        "bbox": [x1, y1, x2, y2],
+        "category": "category_name",
+        "orientation": "orientation_value"
+    }
+]
+```
+
+**Field Specifications:**
+
+1. **bbox**: Bounding box coordinates as [x1, y1, x2, y2] where (x1, y1) is top-left, (x2, y2) is bottom-right.
+
+2. **category**: Must be one of: 'Caption', 'Footnote', 'Formula', 'List-item', 'Page-footer', 'Page-header', 'Picture', 'Section-header', 'Table', 'Text', 'Title'.
+
+3. **orientation**: Text/content orientation relative to normal reading direction. Must be one of:
+   - 'up': Normal upright text (0°)
+   - 'right': Rotated 90° clockwise
+   - 'down': Upside down (180°)
+   - 'left': Rotated 90° counter-clockwise (270°)
+
+**Critical Rules:**
+- Output ONLY bbox, category, and orientation fields
+- DO NOT include any "text" field
+- DO NOT extract or output text content
+- Output must be valid JSON array format
+""",
+
+    # prompt_ocr: parse ocr text except the Page-header and Page-footer
     "prompt_ocr": """Extract the text content from this image.""",
 
     # prompt_grounding_ocr: extract text content in the given bounding box

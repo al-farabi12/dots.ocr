@@ -150,7 +150,8 @@ def post_process_cells(
     input_height,
     factor: int = 28,
     min_pixels: int = 3136, 
-    max_pixels: int = 11289600
+    max_pixels: int = 11289600,
+    prompt_mode: str = None
 ) -> List[Dict]:
     """
     Post-processes cell bounding boxes, converting coordinates from the resized dimensions back to the original dimensions.
@@ -163,6 +164,7 @@ def post_process_cells(
         factor: Resizing factor.
         min_pixels: Minimum number of pixels.
         max_pixels: Maximum number of pixels.
+        prompt_mode: The prompt mode used for parsing (for mode-specific processing).
         
     Returns:
         A list of post-processed cells.
@@ -188,6 +190,24 @@ def post_process_cells(
         ]
         cell_copy = cell.copy()
         cell_copy['bbox'] = bbox_resized
+        
+        # Special handling for orientation mode
+        if prompt_mode == "prompt_layout_with_orientation_en":
+            # Remove text field if present (not wanted in layout-only modes)
+            cell_copy.pop('text', None)
+            
+            # Ensure orientation field exists and is valid
+            valid_orientations = ['up', 'down', 'left', 'right']
+            orientation = cell_copy.get('orientation')
+            
+            # If orientation is invalid or missing, default to 'up'
+            if not orientation or orientation not in valid_orientations:
+                cell_copy['orientation'] = 'up'
+            
+            # Ensure only bbox, category, and orientation fields exist
+            allowed_fields = {'bbox', 'category', 'orientation'}
+            cell_copy = {k: v for k, v in cell_copy.items() if k in allowed_fields}
+        
         cells_out.append(cell_copy)
     
     return cells_out
@@ -213,7 +233,8 @@ def post_process_output(response, prompt_mode, origin_image, input_image, min_pi
             input_image.width,
             input_image.height,
             min_pixels=min_pixels,
-            max_pixels=max_pixels
+            max_pixels=max_pixels,
+            prompt_mode=prompt_mode
         )
         return cells, False
     except Exception as e:

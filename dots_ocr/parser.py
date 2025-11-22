@@ -169,13 +169,18 @@ class DotsOCRParser:
             response = self._inference_with_hf(image, prompt)
         else:
             response = self._inference_with_vllm(image, prompt)
+        
+        # IMPORTANT: Store the raw response BEFORE any processing
+        raw_response = response
+        
         result = {'page_no': page_idx,
             "input_height": input_height,
-            "input_width": input_width
+            "input_width": input_width,
+            "raw_response": raw_response  # Store raw model output (JSON string or plain text)
         }
         if source == 'pdf':
             save_name = f"{save_name}_page_{page_idx}"
-        if prompt_mode in ['prompt_layout_all_en', 'prompt_layout_only_en', 'prompt_grounding_ocr']:
+        if prompt_mode in ['prompt_layout_all_en', 'prompt_layout_only_en', 'prompt_layout_with_orientation_en', 'prompt_grounding_ocr']:
             cells, filtered = post_process_output(
                 response, 
                 prompt_mode, 
@@ -184,7 +189,7 @@ class DotsOCRParser:
                 min_pixels=min_pixels, 
                 max_pixels=max_pixels,
                 )
-            if filtered and prompt_mode != 'prompt_layout_only_en':  # model output json failed, use filtered process
+            if filtered and prompt_mode not in ['prompt_layout_only_en', 'prompt_layout_with_orientation_en']:  # model output json failed, use filtered process
                 json_file_path = os.path.join(save_dir, f"{save_name}.json")
                 with open(json_file_path, 'w', encoding="utf-8") as w:
                     json.dump(response, w, ensure_ascii=False)
@@ -222,7 +227,7 @@ class DotsOCRParser:
                     'layout_info_path': json_file_path,
                     'layout_image_path': image_layout_path,
                 })
-                if prompt_mode != "prompt_layout_only_en":  # no text md when detection only
+                if prompt_mode not in ["prompt_layout_only_en", "prompt_layout_with_orientation_en"]:  # no text md when detection only
                     md_content = layoutjson2md(origin_image, cells, text_key='text')
                     md_content_no_hf = layoutjson2md(origin_image, cells, text_key='text', no_page_hf=True) # used for clean output or metric of omnidocbench、olmbench 
                     md_file_path = os.path.join(save_dir, f"{save_name}.md")
